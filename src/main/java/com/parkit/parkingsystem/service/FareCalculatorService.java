@@ -3,6 +3,9 @@ package com.parkit.parkingsystem.service;
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.model.Ticket;
 
+import javax.xml.datatype.DatatypeConstants;
+import java.util.concurrent.TimeUnit;
+
 public class FareCalculatorService {
 
     public void calculateFare(Ticket ticket){
@@ -10,22 +13,33 @@ public class FareCalculatorService {
             throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
         }
 
-        int inHour = ticket.getInTime().getHours();
-        int outHour = ticket.getOutTime().getHours();
+        long diffInMillies = Math.abs(ticket.getOutTime().getTime() - ticket.getInTime().getTime());
+        long nbFullHour = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+        long nbMinutes = TimeUnit.MINUTES.convert(diffInMillies, TimeUnit.MILLISECONDS) - nbFullHour * 60;
 
-        //TODO: Some tests are failing here. Need to check if this logic is correct
-        int duration = outHour - inHour;
+       double pricePerHour = getPricePerHour(ticket);
+       double fullHoursPrice = pricePerHour * nbFullHour;
+
+        double pricePerMinute = pricePerHour / 60;
+        double minutesPrice = pricePerMinute * nbMinutes;
+        double totalPrice = fullHoursPrice + minutesPrice;
+
+
+        ticket.setPrice(totalPrice);
+    }
+
+    private double getPricePerHour(Ticket ticket){
 
         switch (ticket.getParkingSpot().getParkingType()){
             case CAR: {
-                ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);
-                break;
+                return  Fare.CAR_RATE_PER_HOUR ;
             }
             case BIKE: {
-                ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);
-                break;
+                return  Fare.BIKE_RATE_PER_HOUR;
             }
-            default: throw new IllegalArgumentException("Unkown Parking Type");
+            default: throw new IllegalArgumentException("Unknown Parking Type");
         }
     }
+
+
 }
