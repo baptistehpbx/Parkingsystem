@@ -9,13 +9,17 @@ import com.parkit.parkingsystem.util.InputReaderUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Date;
 
 public class ParkingService {
 
     private static final Logger logger = LogManager.getLogger("ParkingService");
 
-    private static FareCalculatorService fareCalculatorService = new FareCalculatorService();
+    public static FareCalculatorService fareCalculatorService = new FareCalculatorService();
+    //public static DiscountService discountService = new DiscountService(2, ticketDAO);
 
     private InputReaderUtil inputReaderUtil;
     private ParkingSpotDAO parkingSpotDAO;
@@ -44,6 +48,13 @@ public class ParkingService {
                 ticket.setPrice(0);
                 ticket.setInTime(inTime);
                 ticket.setOutTime(null);
+               if (ticketDAO.isRecurrent(vehicleRegNumber)) {
+                    System.out.println ("Welcome back! As a recurring user of our parking lot, you'll benefit from a 5% discount.");
+                    ticket.setAvailableDiscount(true);
+                }else {
+                   ticket.setAvailableDiscount(false);
+               }
+
                 ticketDAO.saveTicket(ticket);
                 System.out.println("Generated Ticket and saved in DB");
                 System.out.println("Please park your vehicle in spot number:"+parkingSpot.getId());
@@ -97,6 +108,7 @@ public class ParkingService {
         }
     }
 
+
     public void processExitingVehicle() {
         try{
             String vehicleRegNumber = getVehichleRegNumber();
@@ -104,6 +116,7 @@ public class ParkingService {
             Date outTime = new Date();
             ticket.setOutTime(outTime);
             fareCalculatorService.calculateFare(ticket);
+            //discountService.calculateDiscount(ticket);
             if(ticketDAO.updateTicket(ticket)) {
                 ParkingSpot parkingSpot = ticket.getParkingSpot();
                 parkingSpot.setAvailable(true);
