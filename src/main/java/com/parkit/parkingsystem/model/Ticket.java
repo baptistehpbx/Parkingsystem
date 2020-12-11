@@ -2,6 +2,7 @@ package com.parkit.parkingsystem.model;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Objects;
 
 public class Ticket {
     private int id;
@@ -60,8 +61,10 @@ public class Ticket {
         this.outTime = outTime;
     }
 
-    public boolean isAvailableDiscount() {return true ; }
+    public void setAvailableDiscount (boolean recurrent) {isAvailableDiscount=recurrent;}
 
-    public void setAvailableDiscount(boolean b) {;}
-    }
+    public boolean isAvailableDiscount() {return isAvailableDiscount;}
+
+
 }
+

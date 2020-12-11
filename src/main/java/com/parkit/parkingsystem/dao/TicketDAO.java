@@ -8,17 +8,10 @@ import com.parkit.parkingsystem.model.Ticket;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static com.parkit.parkingsystem.constants.DBConstants.UPDATE_TICKET;
 
@@ -84,7 +77,12 @@ public class TicketDAO {
             con = dataBaseConfig.getConnection();
             PreparedStatement ps = con.prepareStatement(UPDATE_TICKET);
             ps.setDouble(1, ticket.getPrice());
-            ps.setTimestamp(2, new Timestamp(ticket.getOutTime().getTime()));
+            if (ticket.getOutTime() != null){
+                ps.setTimestamp(2, new Timestamp(ticket.getOutTime().getTime())); //car heure de sortie peut être nulle lors de la rentrée
+            } else {
+                ps.setTimestamp(2, null);
+            }
+
             ps.setInt(3, ticket.getId());
             ps.execute();
             return true;
@@ -108,7 +106,8 @@ public class TicketDAO {
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                return rs.getBoolean(1);
+                int count = rs.getInt(1);
+                return count >1;
             }
 
         }catch (Exception ex){
@@ -121,4 +120,8 @@ public class TicketDAO {
         return false;
     }
 
+
+    public void updateTicketForIntegrationTest(Ticket ticket) {
+
+    }
 }
