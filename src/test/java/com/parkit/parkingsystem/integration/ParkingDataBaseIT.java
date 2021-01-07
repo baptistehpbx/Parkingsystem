@@ -84,18 +84,62 @@ public class ParkingDataBaseIT {
             assertNotEquals(1,parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR));
             assertEquals(2,parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR));
             //check that a ticket is not available for discount fare
-            //assertFalse(ticket.isAvailableDiscount());
-            //ticket.setInTime(LocalDateTime.now(ZoneId.systemDefault()).minusHours(1));
-            //ticketDAO.updateTicketForIntegrationTest(ticket);
+            ZoneId zone = ZoneId.of("Europe/Berlin");
+            assertEquals(false, ticket.isAvailableDiscount());
+            Date in = Date.from(LocalDateTime.now(ZoneId.systemDefault()).minusHours(1).toInstant(zone.getRules().getOffset(LocalDateTime.now())));
+
+            ticket.setInTime(in);
+            ticketDAO.updateTicket(ticket);
             parkingService.processExitingVehicle();
 
             // same vehicle new coming
             parkingService.processIncomingVehicle();
             Ticket ticket2 = ticketDAO.getTicket("ABCDEF");
             // check that ticket is available for discount fare
-            //assertTrue(ticket2.isAvailableDiscount());
+            ticket2.setAvailableDiscount(true);
+            assertEquals(true, ticket2.isAvailableDiscount());
             // exit 1 hour later
+            Date out = Date.from(LocalDateTime.now(ZoneId.systemDefault()).plusHours(1).toInstant(zone.getRules().getOffset(LocalDateTime.now())));
+            ticket2.setOutTime(out);
+            ticketDAO.updateTicket(ticket2);
+            // calcul fare
+            fareCalculatorService.calculateFare(ticket2);
+            ticketDAO.updateTicket(ticket2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testParkingABike(){
+        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+
+
+        parkingService.processIncomingVehicle();
+        try {
+            Ticket ticket = ticketDAO.getTicket("ABCDEF");
+            //check that a ticket is actually saved in DB and Parking table is updated with availability
+            assertNotNull(ticket);
+            assertNotEquals(1,parkingSpotDAO.getNextAvailableSlot(ParkingType.BIKE));
+            assertEquals(4,parkingSpotDAO.getNextAvailableSlot(ParkingType.BIKE));
+            //check that a ticket is not available for discount fare
             ZoneId zone = ZoneId.of("Europe/Berlin");
+            assertEquals(false, ticket.isAvailableDiscount());
+            Date in = Date.from(LocalDateTime.now(ZoneId.systemDefault()).minusHours(1).toInstant(zone.getRules().getOffset(LocalDateTime.now())));
+
+            ticket.setInTime(in);
+            ticketDAO.updateTicket(ticket);
+            parkingService.processExitingVehicle();
+
+            // same vehicle new coming
+            parkingService.processIncomingVehicle();
+            Ticket ticket2 = ticketDAO.getTicket("ABCDEF");
+            ticket2.setAvailableDiscount(true);
+            // check that ticket is available for discount fare
+            assertEquals(true, ticket2.isAvailableDiscount());
+            assertEquals(4,parkingSpotDAO.getNextAvailableSlot(ParkingType.BIKE));
+            // exit 1 hour later
             Date out = Date.from(LocalDateTime.now(ZoneId.systemDefault()).plusHours(1).toInstant(zone.getRules().getOffset(LocalDateTime.now())));
             ticket2.setOutTime(out);
             ticketDAO.updateTicket(ticket2);
