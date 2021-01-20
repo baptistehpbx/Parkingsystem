@@ -54,15 +54,6 @@ public class ParkingDataBaseIT {
 
     }
 
-    /*@Test
-    public void testParkingACar(){
-        assert(ticketDAO.getTicket("ABCDEF") == null);
-        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-        parkingService.processIncomingVehicle();
-        //TODO: check that a ticket is actually saved in DB and Parking table is updated with availability
-        assert(ticketDAO.getTicket("ABCDEF") != null);
-    }*/
-
     @Test
     public void testParkingLotExit(){
         testParkingACar();
